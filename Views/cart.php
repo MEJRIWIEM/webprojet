@@ -77,6 +77,7 @@ if(isset($_GET['index']) && !isset($_POST['update'])) {
 	$cart = array_values($cart);
 	$_SESSION['cart'] = $cart;
 }
+
 // Update quantity in cart
 if(isset($_POST['update'])) {
   $arrQuantity = $_POST['quantity'];
@@ -105,27 +106,20 @@ if(isset($_POST['update'])) {
 
 
 						  
-						  $orderid = $row['id'] ; 
+						  $ods = $row['id'] ; 
 
-						  echo $orderid ;
+						 
 
 
 						  ?> 
 
-
- 							
-
-
-
 						  </h1>	
 
-								 
 
-								<?php endif ; } ; }; ?> 
+								<?php endif ; } ; };
 
+								$conn->close(); ?> 
 
-
-							 
 
 
 
@@ -261,26 +255,86 @@ if(isset($_POST['update'])) {
 								</tr>
 							</thead>
 						<!-- test2 -->
-
-				 <?php
-	mysql_connect("localhost", "root", "club0000") or
-    die("Could not connect: " . mysql_error());
-	mysql_select_db("demo");
-
-	$result = mysql_query("SELECT price, name FROM ordersdetail");
-
-	while ($row = mysql_fetch_array($result, MYSQL_NUM)) {
-    printf("ID: %s  Name: %s", $row[0], $row[1]);  
-	}
-
-	mysql_free_result($result);
-?>
+ 
 
 						<!-- test2 end --> 	
 
 
+						 <?php
+include 'connect.php';
+$sql = "SELECT ordersid,productid, price FROM odersdetail";
+$result = $conn->query($sql);
+$prods = 0 ; 
+$total1 = 0 ; 
+
+if ($result->num_rows > 0) {
+    // output data of each row
+    while($row = $result->fetch_assoc()) {
+    	 if ($row["ordersid"] == $ods ) {
+        $prods = $row["productid"] ; 
+
+         
+        $sql2 = "SELECT id,name, price,image , quantity FROM product";
+        $result1 = $com->query($sql2);
+
+        // echo $result1->num_rows ;
+    	  
+         while($row1 = $result1->fetch_assoc()) {
+         	if ( $prods == $row1['id'])  
+         		{ ?> 
+         			<?php  $total1 = $row1['price'] + $total1 ; ?>
+         			 <tr>
+									<td class="product-col">
+									 <?php  //echo "<img src=$product->name > </img>"; 
+									 $imm1= $row1['image'] ;  
+									 	echo  "<img  src=$imm1> ;"
+
+									 ?>
+										<div class="pc-title">
+									<?php	echo $row1['name']    ;  ?>
+											<p>  </p>
+										</div>
+									</td>
+									<td class="quy-col">
+										<div class="quantity">
+					                        <div class="pro-qty">
+												<input type="number" min="1"  value="1" name="quantity[]">
+											</div>
+                    					</div>
+									</td>
+									<td class="size-col"><h4><a  href="cart.php?delete=<?php echo $prods; ?>" onclick="return confirm('Are you sure?')">Fassakh mel DB</a></h4></td>
+									<td class="total-col"><h4> <?php echo $row1['price']; ?> </h4></td>
+								</tr>
 
 
+
+
+
+
+
+
+
+
+
+<?php 
+				  ;
+         		 }
+
+
+
+         }
+
+
+
+    } 
+         
+    }
+} else {
+    echo "you have nothing in your cart ";
+}
+
+$conn->close();
+?>
  
 
 
@@ -295,7 +349,7 @@ if(isset($_POST['update'])) {
 
  							<?php 
 					     	$cart = unserialize(serialize($_SESSION['cart']));
-					 	     $s = 0;
+					 	     $s = $total1;
 					 	   $index = 0;
 					 	   for($i=0; $i<count($cart); $i++)
 					 	   {
@@ -339,6 +393,7 @@ if(isset($_POST['update'])) {
 					</form>
 						</div>
 						<div class="total-cost">
+
 							<h6>Total <span> <?php echo $s; ?>  </span></h6>
 							<br> <br> 
 
@@ -350,7 +405,8 @@ if(isset($_POST['update'])) {
 						<input type="text" placeholder="Enter promo code">
 						<button>Submit</button>
 					</form>
-					<a href="checkout.php" class="site-btn">Proceed to checkout</a>
+					<a href="checkout.php" class="site-btn">Save Cart </a>
+					<a href="index.php" class="site-btn">Go to checkout </a>
 					<a href="index.php" class="site-btn sb-dark">Continue shopping</a>
 				</div>
 			</div>
