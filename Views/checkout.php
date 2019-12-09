@@ -31,4 +31,6 @@ mysqli_query($con, $sql2);
 // Clear all product in cart
 unset($_SESSION['cart']);
  ?>
- Thanks for buying products. Click <a href="index.php">here</a> to continue purchasing products.
+  
+ <?php  header( "refresh:0;url=cart.php" );
+;?> 
