@@ -40,8 +40,25 @@ session_start();
 
 require 'connect.php';
 require 'item.php';
+	 $cii = $_SESSION['username']  ;
+	  
+	
+	
 
-if(isset($_GET['id']) && !isset($_POST['update']))  { 
+
+
+
+
+
+
+	
+
+
+
+
+
+
+if(isset($_GET['id']) && !isset($_POST['update'])  /* and if not in cart */)  { 
 	$sql = "SELECT * FROM product WHERE id=".$_GET['id'];
 	$result = mysqli_query($con, $sql);
 	$product = mysqli_fetch_object($result); 
@@ -52,6 +69,45 @@ if(isset($_GET['id']) && !isset($_POST['update']))  {
     $iteminstock = $product->quantity;
     $item->image=$product->image;
 	$item->quantity = 1;
+	$ordersid = 1 ; 
+
+$incarte =  "SELECT username, productid,quantity FROM odersdetail
+            WHERE username = '$cii' 
+            AND productid = '$product->id'"; 
+	$rez = mysqli_query($con, $incarte);
+	 $checking = mysqli_num_rows($rez) ;
+	 echo $checking ; 
+
+
+
+
+
+
+
+
+
+
+	$con->close();
+	  //
+	$_SESSION['incart'] = $_SESSION['incart'] + 1 ;
+
+if($checking==0) {
+$pss = 1; // put one in quantity mahdouuch 
+$sql = "INSERT INTO `odersdetail` (`productid`, `username`, `price`, `quantity`, `image`) VALUES ('$product->id', '$cii', '$product->price', '$pss', '$product->image');
+";
+
+
+
+if ($conn->query($sql) === TRUE) {
+    //echo "New record created successfully";
+} else {
+    echo "Error: " . $sql . "<br>" . $conn->error;
+}
+
+$conn->close();
+
+
+	  //
 
 	// Check product is existing in cart
 	$index = -1;
@@ -69,13 +125,25 @@ if(isset($_GET['id']) && !isset($_POST['update']))  {
 				 $cart[$index]->quantity ++;
 			     $_SESSION['cart'] = $cart;
 		}
+
+	}	
+
+//incrementi el valeur 
+
+
 }
 // Delete product in cart
 if(isset($_GET['index']) && !isset($_POST['update'])) {
-	$cart = unserialize(serialize($_SESSION['cart']));
-	unset($cart[$_GET['index']]);
-	$cart = array_values($cart);
-	$_SESSION['cart'] = $cart;
+	include 'connect.php' ; 
+
+	$sqldelete = "DELETE FROM odersdetail WHERE productid='".$_GET['index']."';" ; 
+	mysqli_query($conn,$sqldelete);
+
+	$conn->close();
+
+
+	 
+
 }
 
 // Update quantity in cart
@@ -94,6 +162,7 @@ if(isset($_POST['update'])) {
 
 <!-- test start --> 
 						<?php 
+						require 'connect.php' ;
 						$sql = "SELECT * From  orders;" ; 
 						$result = mysqli_query($conn,$sql);
 						$resultCheck = mysqli_num_rows($result) ;
@@ -175,7 +244,7 @@ if(isset($_POST['update'])) {
 							<div class="up-item">
 								<div class="shopping-card">
 									<i class="flaticon-bag"></i>
-									<span></span>
+									<span><?php echo $_SESSION['incart'];?></span>
 								</div>
 								<a href="#">Shopping Cart</a>
 							</div>
@@ -255,14 +324,15 @@ if(isset($_POST['update'])) {
 								</tr>
 							</thead>
 						<!-- test2 -->
- 
+   
 
 						<!-- test2 end --> 	
 
 
+						  
 						 <?php
 include 'connect.php';
-$sql = "SELECT ordersid,productid, price FROM odersdetail";
+$sql =  "SELECT productid FROM odersdetail where username='".$cii."'";
 $result = $conn->query($sql);
 $prods = 0 ; 
 $total1 = 0 ; 
@@ -270,8 +340,8 @@ $total1 = 0 ;
 if ($result->num_rows > 0) {
     // output data of each row
     while($row = $result->fetch_assoc()) {
-    	 if ($row["ordersid"] == $ods ) {
-        $prods = $row["productid"] ; 
+    	   
+        $prods = $row['productid'] ; 
 
          
         $sql2 = "SELECT id,name, price,image , quantity FROM product";
@@ -287,6 +357,7 @@ if ($result->num_rows > 0) {
 									<td class="product-col">
 									 <?php  //echo "<img src=$product->name > </img>"; 
 									 $imm1= $row1['image'] ;  
+
 									 	echo  "<img  src=$imm1> ;"
 
 									 ?>
@@ -298,11 +369,11 @@ if ($result->num_rows > 0) {
 									<td class="quy-col">
 										<div class="quantity">
 					                        <div class="pro-qty">
-												<input type="number" min="1"  value="1" name="quantity[]">
+												<input type="number" min="1"  value="<?php echo ;?>" name="quantity[]" >
 											</div>
                     					</div>
 									</td>
-									<td class="size-col"><h4><a  href="cart.php?delete=<?php echo $prods; ?>" onclick="return confirm('Are you sure?')">Fassakh mel DB</a></h4></td>
+									<td class="size-col"><h4><a  href="cart.php?index=<?php echo $prods; ?>" onclick="return confirm('Are you sure?')">Fassakh mel DB</a></h4></td>
 									<td class="total-col"><h4> <?php echo $row1['price']; ?> </h4></td>
 								</tr>
 
@@ -326,7 +397,7 @@ if ($result->num_rows > 0) {
 
 
 
-    } 
+    
          
     }
 } else {
@@ -344,45 +415,7 @@ $conn->close();
 
 
 
-
-
-
- 							<?php 
-					     	$cart = unserialize(serialize($_SESSION['cart']));
-					 	     $s = $total1;
-					 	   $index = 0;
-					 	   for($i=0; $i<count($cart); $i++)
-					 	   {
-					 		$s += $cart[$i]->price * $cart[$i]->quantity;  ?>	
-							 
-								  
-					
-								 
-								<tr>
-									<td class="product-col">
-									 <?php  //echo "<img src=$product->name > </img>"; 
-									 $imm= $cart[$i]->image ;  
-									 	echo  "<img  src=$imm> ;"
-
-									 ?>
-										<div class="pc-title">
-									<?php	echo $cart[$i]->name     ;  ?>
-											<p>  </p>
-										</div>
-									</td>
-									<td class="quy-col">
-										<div class="quantity">
-					                        <div class="pro-qty">
-												<input type="number" min="1"  value="<?php echo $cart[$i]->quantity; ?>" name="quantity[]">
-											</div>
-                    					</div>
-									</td>
-									<td class="size-col"><h4><a  href="cart.php?index=<?php echo $index; ?>" onclick="return confirm('Are you sure?')">Remove</a></h4></td>
-									<td class="total-col"><h4> <?php echo $cart[$i]->price; ?> </h4></td>
-								</tr>
-										<?php 
-	 	$index++;
- 		} ?>
+ 
 		
 							</tbody>
 					
@@ -394,7 +427,7 @@ $conn->close();
 						</div>
 						<div class="total-cost">
 
-							<h6>Total <span> <?php echo $s; ?>  </span></h6>
+							<h6>Total <span> <?php echo $total1; ?>  </span></h6>
 							<br> <br> 
 
 						</div>
@@ -405,7 +438,7 @@ $conn->close();
 						<input type="text" placeholder="Enter promo code">
 						<button>Submit</button>
 					</form>
-					<a href="checkout.php" class="site-btn">Save Cart </a>
+					
 					<a href="index.php" class="site-btn">Go to checkout </a>
 					<a href="index.php" class="site-btn sb-dark">Continue shopping</a>
 				</div>
