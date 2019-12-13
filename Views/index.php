@@ -118,7 +118,7 @@ $result = mysqli_query($con, $sql);
 									   
 										 <span>
 										 	 
-										 	<?php echo $_SESSION['incart'];?>
+										 	<?php echo $_SESSION['panier'];?>
 
 
 										  </span>

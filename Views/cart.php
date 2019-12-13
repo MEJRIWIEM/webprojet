@@ -1,3 +1,4 @@
+ 
 <!DOCTYPE html>
 <html lang="zxx">
 <head>
@@ -34,13 +35,54 @@
 
 
 <body>
+
+	<?php 
+	session_start();
+	 $piww = $_SESSION['username']  ;
+	  
+ 
+require 'connect.php' ; 
+$shoppig = "SELECT *  FROM users   where username = '$piww'" ;
+               
+ $rez = mysqli_query($conn, $shoppig);
+  $iiiz = mysqli_num_rows($rez) ;
+   
+while($mow=mysqli_fetch_assoc($rez)){
+$shoppingcart  =   $mow['panier'] ; 
+ 
+
+ 
+$conn->close();
+$_SESSION['panier'] = $shoppingcart ; 
+
+};
+
+ 
+  
+ 
+
+
+
+
+
+
+	?> 
+
+
+
+
+ 
+
+
+
 	 <?php 
 // Start the session
-session_start();
+
 
 require 'connect.php';
 require 'item.php';
 	 $cii = $_SESSION['username']  ;
+
 	  
 	
 	
@@ -59,6 +101,14 @@ require 'item.php';
 
 
 if(isset($_GET['id']) && !isset($_POST['update'])  /* and if not in cart */)  { 
+	 require 'connect.php' ; 
+	 $_SESSION['panier'] =   $_SESSION['panier'] +1 ; 
+
+	 $sfr = "UPDATE users SET panier = panier + 1 where username = '$cii' 
+            ;" ; 
+            mysqli_query($conn,$sfr); 
+            $conn->close();
+            include 'connect.php' ; 
 	$sql = "SELECT * FROM product WHERE id=".$_GET['id'];
 	$result = mysqli_query($con, $sql);
 	$product = mysqli_fetch_object($result); 
@@ -75,8 +125,9 @@ $incarte =  "SELECT username, productid,quantity FROM odersdetail
             WHERE username = '$cii' 
             AND productid = '$product->id'"; 
 	$rez = mysqli_query($con, $incarte);
-	 $checking = mysqli_num_rows($rez) ;
-	 echo $checking ; 
+	$checking = mysqli_num_rows($rez) ;
+	  
+	  
 
 
 
@@ -89,9 +140,11 @@ $incarte =  "SELECT username, productid,quantity FROM odersdetail
 
 	$con->close();
 	  //
-	$_SESSION['incart'] = $_SESSION['incart'] + 1 ;
+	
 
 if($checking==0) {
+
+
 $pss = 1; // put one in quantity mahdouuch 
 $sql = "INSERT INTO `odersdetail` (`productid`, `username`, `price`, `quantity`, `image`) VALUES ('$product->id', '$cii', '$product->price', '$pss', '$product->image');
 ";
@@ -128,18 +181,33 @@ $conn->close();
 
 	}	
 
-//incrementi el valeur 
+if ( $checking > 0 ) {
+	require 'connect.php' ; 
 
 
+	 $sfr = "UPDATE odersdetail SET quantity = quantity + 1 where username = '$cii' 
+            AND productid = '$product->id' ;" ; 
+            mysqli_query($conn,$sfr); 
+            $conn->close();
+}
+
+	
 }
 // Delete product in cart
 if(isset($_GET['index']) && !isset($_POST['update'])) {
 	include 'connect.php' ; 
-
+	$_SESSION['panier'] = $_SESSION['panier'] - 1 ; 
 	$sqldelete = "DELETE FROM odersdetail WHERE productid='".$_GET['index']."';" ; 
 	mysqli_query($conn,$sqldelete);
 
 	$conn->close();
+	require 'connect.php' ; 
+
+
+	 $fsr = "UPDATE users SET panier = panier - 1 where username = '$cii' 
+            ;" ; 
+            mysqli_query($con,$fsr); 
+            $con->close();
 
 
 	 
@@ -244,7 +312,12 @@ if(isset($_POST['update'])) {
 							<div class="up-item">
 								<div class="shopping-card">
 									<i class="flaticon-bag"></i>
-									<span><?php echo $_SESSION['incart'];?></span>
+									<?php
+										   
+
+
+									 $shoppingcard = $shoppingcart + 1  ;  ?>
+									<span><?php echo $_SESSION['panier'];?></span>
 								</div>
 								<a href="#">Shopping Cart</a>
 							</div>
@@ -332,17 +405,19 @@ if(isset($_POST['update'])) {
 						  
 						 <?php
 include 'connect.php';
-$sql =  "SELECT productid FROM odersdetail where username='".$cii."'";
+$sql =  "SELECT productid, quantity FROM odersdetail where username='".$cii."'";
 $result = $conn->query($sql);
 $prods = 0 ; 
 $total1 = 0 ; 
 
 if ($result->num_rows > 0) {
-    // output data of each row
+
+	 	
+     // output data of each row
     while($row = $result->fetch_assoc()) {
     	   
         $prods = $row['productid'] ; 
-
+        $qtty = $row['quantity'] ; 
          
         $sql2 = "SELECT id,name, price,image , quantity FROM product";
         $result1 = $com->query($sql2);
@@ -352,7 +427,7 @@ if ($result->num_rows > 0) {
          while($row1 = $result1->fetch_assoc()) {
          	if ( $prods == $row1['id'])  
          		{ ?> 
-         			<?php  $total1 = $row1['price'] + $total1 ; ?>
+         			<?php  $total1 = $row1['price']*$row['quantity'] + $total1 ; ?>
          			 <tr>
 									<td class="product-col">
 									 <?php  //echo "<img src=$product->name > </img>"; 
@@ -369,12 +444,32 @@ if ($result->num_rows > 0) {
 									<td class="quy-col">
 										<div class="quantity">
 					                        <div class="pro-qty">
-												<input type="number" min="1"  value="<?php echo ;?>" name="quantity[]" >
+		                        	<?php 
+		                        	 
+		                        	// quantity display 
+/*
+								require 'connect.php' ; 
+
+
+								 $sfr = "SELECT  `quantity` FROM `odersdetail` WHERE   username = '$cii' 
+							            AND productid = '$product->id' ;" ; 
+							            mysqli_query($conn,$sfr); 
+							            $conn->close();
+
+
+
+
+*/
+
+
+		                        	;?> 
+
+												<input type="number" min="1"  value="<?php echo $row['quantity'] ;?>" name="quantity[]" >
 											</div>
                     					</div>
 									</td>
-									<td class="size-col"><h4><a  href="cart.php?index=<?php echo $prods; ?>" onclick="return confirm('Are you sure?')">Fassakh mel DB</a></h4></td>
-									<td class="total-col"><h4> <?php echo $row1['price']; ?> </h4></td>
+									<td class="size-col"><h4><a  href="cart.php?index=<?php echo $prods; ?>" onclick="return confirm('Are you sure?')">Remove item</a></h4></td>
+									<td class="total-col"><h4> <?php echo $row1['price']*$row['quantity']; ?> </h4></td>
 								</tr>
 
 
@@ -441,6 +536,8 @@ $conn->close();
 					
 					<a href="index.php" class="site-btn">Go to checkout </a>
 					<a href="index.php" class="site-btn sb-dark">Continue shopping</a>
+					<form action="sendcart.php" method="GET"> <a href="cart.php" class="site-btn">save card </a> </form>
+
 				</div>
 			</div>
 		</div>
